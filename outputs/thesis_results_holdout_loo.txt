@@ -1,0 +1,16 @@
+MEDICAL CHATBOT - THESIS RESULTS (rebuilt evaluation)
+generator gemini-3.5-flash-lite | independent judge gemini-3.1-flash-lite | n=30
+
+                                    q_grounding  q_personalisation  q_helpfulness  q_safety  quality_total
+system                                                                                                    
+ML Only (BiLSTM retrieval + rules)        12.27               1.37           3.63     12.27          29.53
+Gemini Only (LLM)                         22.47              17.40          20.37     18.47          78.70
+Hybrid (BiLSTM + Gemini)                  22.67              16.63          20.10     18.70          78.10
+
+                                    support_score  groundedness  hallucination_rate  contradiction_rate  numeric_hallucination_rate  n_claims
+system                                                                                                                                       
+ML Only (BiLSTM retrieval + rules)         0.6778        0.6667              0.2000              0.1333                      0.0000    2.2000
+Gemini Only (LLM)                          0.2202        0.1092              0.8908              0.0261                      0.4000    3.9333
+Hybrid (BiLSTM + Gemini)                   0.2669        0.1111              0.8889              0.0167                      0.4333    3.6000
+
+Ranking: Gemini Only (LLM) > Hybrid (BiLSTM + Gemini) > ML Only (BiLSTM retrieval + rules)

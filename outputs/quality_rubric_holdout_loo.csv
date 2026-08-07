@@ -1,0 +1,4 @@
+system,q_grounding,q_personalisation,q_helpfulness,q_safety,quality_total
+ML Only (BiLSTM retrieval + rules),12.27,1.37,3.63,12.27,29.53
+Gemini Only (LLM),22.47,17.4,20.37,18.47,78.7
+Hybrid (BiLSTM + Gemini),22.67,16.63,20.1,18.7,78.1

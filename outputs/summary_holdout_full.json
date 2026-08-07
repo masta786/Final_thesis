@@ -1,0 +1,91 @@
+{
+  "tag": "holdout_full",
+  "kb_mode": "full",
+  "n": 30,
+  "generator": "gemini-3.5-flash-lite",
+  "judge": "gemini-3.1-flash-lite",
+  "ranking": [
+    "Hybrid (BiLSTM + Gemini)",
+    "Gemini Only (LLM)",
+    "ML Only (BiLSTM retrieval + rules)"
+  ],
+  "systems": {
+    "ml": {
+      "label": "ML Only (BiLSTM retrieval + rules)",
+      "quality_total": 48.97,
+      "ci_low": 39.93333333333333,
+      "ci_high": 57.766666666666666,
+      "grounding": 20.6,
+      "personalisation": 2.77,
+      "helpfulness": 10.57,
+      "safety": 15.03,
+      "hallucination_rate": 0.1333,
+      "numeric_hallucination_rate": 0.0,
+      "time_ms": 35.3,
+      "time_ms_median": 18.2,
+      "n_words": 80.86666666666666
+    },
+    "gemini": {
+      "label": "Gemini Only (LLM)",
+      "quality_total": 78.23,
+      "ci_low": 73.59916666666666,
+      "ci_high": 82.46666666666667,
+      "grounding": 20.87,
+      "personalisation": 18.2,
+      "helpfulness": 20.37,
+      "safety": 18.8,
+      "hallucination_rate": 0.9128,
+      "numeric_hallucination_rate": 0.4666666666666667,
+      "time_ms": 39612.5,
+      "time_ms_median": 59182.8,
+      "n_words": 159.83333333333334
+    },
+    "hybrid": {
+      "label": "Hybrid (BiLSTM + Gemini)",
+      "quality_total": 79.27,
+      "ci_low": 75.06583333333333,
+      "ci_high": 83.13333333333334,
+      "grounding": 24.47,
+      "personalisation": 15.87,
+      "helpfulness": 20.07,
+      "safety": 18.87,
+      "hallucination_rate": 0.7667,
+      "numeric_hallucination_rate": 0.5333333333333333,
+      "time_ms": 61040.1,
+      "time_ms_median": 60320.4,
+      "n_words": 147.83333333333334
+    }
+  },
+  "pairwise": [
+    {
+      "a": "hybrid",
+      "b": "gemini",
+      "mean_diff": 1.0333333333333334,
+      "t_p": 0.5471236541156512,
+      "holm_p": 0.5471236541156512,
+      "wilcoxon_p": 0.7843349598597793,
+      "cohen_dz": 0.1112274306388256,
+      "significant": false
+    },
+    {
+      "a": "hybrid",
+      "b": "ml",
+      "mean_diff": 30.3,
+      "t_p": 7.296700469495509e-07,
+      "holm_p": 2.1890101408486525e-06,
+      "wilcoxon_p": 5.725556762809471e-06,
+      "cohen_dz": 1.1476006633578324,
+      "significant": true
+    },
+    {
+      "a": "gemini",
+      "b": "ml",
+      "mean_diff": 29.266666666666666,
+      "t_p": 1.2905181234401242e-06,
+      "holm_p": 2.5810362468802484e-06,
+      "wilcoxon_p": 5.198579161140839e-06,
+      "cohen_dz": 1.109463742391767,
+      "significant": true
+    }
+  ]
+}

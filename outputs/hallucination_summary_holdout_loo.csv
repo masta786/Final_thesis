@@ -1,0 +1,4 @@
+system,support_score,groundedness,hallucination_rate,contradiction_rate,numeric_hallucination_rate,n_claims
+ML Only (BiLSTM retrieval + rules),0.6778,0.6667,0.2,0.1333,0.0,2.2
+Gemini Only (LLM),0.2202,0.1092,0.8908,0.0261,0.4,3.9333
+Hybrid (BiLSTM + Gemini),0.2669,0.1111,0.8889,0.0167,0.4333,3.6

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Medical Chatbot — Hybrid vs Gemini vs LSTM</title>
+<style>
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --surface2:#f8fafc; --border:#e4e9f0;
+  --text:#16202f; --text2:#5a6b83; --text3:#8695ab;
+  --accent:#2f6fed; --accent-soft:#eaf1fe;
+
+  --hybrid:#1565C0; --hybrid-soft:#e8f1fb;
+  --gemini:#EF6C00; --gemini-soft:#fdf1e6;
+  --lstm:#78909C;   --lstm-soft:#eef1f3;
+
+  --good:#12805a; --good-soft:#e9f7f1;
+  --warn:#a86400; --warn-soft:#fdf4e3;
+  --bad:#c0392f;  --bad-soft:#fdeceb;
+
+  --radius:12px;
+  --header-h:60px;
+  --shadow:0 1px 2px rgba(16,32,64,.05), 0 4px 14px rgba(16,32,64,.05);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);line-height:1.6;font-size:14px;
+  -webkit-font-smoothing:antialiased;
+  /* app shell: the page itself never scrolls, each pane scrolls on its own */
+  height:100dvh;display:flex;flex-direction:column;overflow:hidden;
+}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d6dde7;border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#c2ccda}
+
+/* ── header ───────────────────────────────────────────────────────────── */
+header{
+  flex:none;padding:11px 20px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;z-index:40;
+}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.logo{
+  width:34px;height:34px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:var(--accent-soft);color:var(--accent);font-size:18px;
+}
+.brand-txt{min-width:0}
+header h1{font-size:15px;font-weight:650;letter-spacing:.1px;white-space:nowrap}
+header .sub{
+  color:var(--text3);font-size:11.5px;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;
+}
+#status{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.chip{
+  font-size:11px;padding:4px 10px;border-radius:99px;background:var(--surface2);
+  border:1px solid var(--border);color:var(--text2);white-space:nowrap;
+}
+.chip.on{color:var(--good);background:var(--good-soft);border-color:#c6e8dc}
+.chip.off{color:var(--bad);background:var(--bad-soft);border-color:#f4cdc9}
+.menu-btn{
+  display:none;flex:none;width:36px;height:36px;border-radius:9px;cursor:pointer;
+  background:var(--surface2);border:1px solid var(--border);color:var(--text2);
+  font-size:16px;line-height:1;
+}
+.menu-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ── layout: two independently scrolling panes ────────────────────────── */
+main{
+  flex:1;min-height:0;display:grid;
+  grid-template-columns:clamp(260px,22vw,300px) minmax(0,1fr);
+  max-width:1800px;width:100%;margin:0 auto;
+}
+.sidebar{
+  min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:18px 8px 18px 20px;
+}
+.chat{min-height:0;display:flex;flex-direction:column;padding:0 20px 0 12px}
+
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);
+}
+.card + .card{margin-top:14px}
+.card h2{
+  font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--text3);margin-bottom:10px;font-weight:650;
+}
+
+/* ── sidebar contents ─────────────────────────────────────────────────── */
+label{display:block;font-size:11px;color:var(--text2);margin:10px 0 4px;font-weight:500}
+input,textarea,select{
+  width:100%;padding:8px 11px;background:var(--surface);color:var(--text);
+  border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;
+}
+input:focus,textarea:focus,select:focus{
+  outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);
+}
+.examples{display:flex;flex-direction:column;gap:6px}
+.examples button{
+  text-align:left;padding:8px 11px;background:var(--surface2);color:var(--text2);
+  border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;
+  font-family:inherit;transition:.14s;line-height:1.45;
+}
+.examples button:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.examples .tag{
+  display:block;font-size:9.5px;color:var(--text3);font-weight:650;
+  text-transform:uppercase;letter-spacing:.07em;margin-bottom:1px;
+}
+.note{font-size:11.5px;color:var(--text3);line-height:1.6}
+.note + .note{margin-top:8px}
+.note b{color:var(--text2)}
+
+/* ── conversation pane ────────────────────────────────────────────────── */
+.thread-wrap{
+  flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:18px 4px 8px;scroll-behavior:smooth;
+}
+.thread{display:flex;flex-direction:column;gap:26px}
+.turn{display:flex;flex-direction:column;gap:12px;scroll-margin-top:8px}
+
+.bubble-row{display:flex;justify-content:flex-end;gap:9px;align-items:flex-start}
+.bubble{
+  background:var(--accent);color:#fff;padding:10px 15px;border-radius:14px 14px 4px 14px;
+  max-width:min(680px,80%);font-size:14px;box-shadow:var(--shadow);
+  overflow-wrap:anywhere;
+}
+.avatar{
+  width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:700;
+  margin-top:3px;
+}
+
+.verdict{
+  display:flex;align-items:flex-start;gap:9px;padding:11px 14px;
+  background:var(--hybrid-soft);border:1px solid #bcd8f2;border-radius:10px;
+  font-size:12.5px;color:#10457c;
+}
+.verdict b{font-weight:650}
+.verdict .ico{font-size:14px;line-height:1.3;flex:none}
+
+/* ── comparison grid ──────────────────────────────────────────────────────
+   Three columns is the point of the demo, so it is held for as long as it
+   fits. Below that the row is swiped horizontally rather than stacked - a
+   stacked layout would put the systems on separate screens and there would be
+   nothing left to compare.                                                */
+.compare{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:14px;align-items:stretch;
+}
+/* base rule must come before the media query - equal specificity, last wins */
+.swipe-hint{
+  display:none;font-size:10.5px;color:var(--text3);text-align:center;margin-top:-4px;
+}
+@media (max-width:1180px){
+  .compare{
+    grid-template-columns:none;grid-auto-flow:column;
+    grid-auto-columns:minmax(288px,1fr);
+    overflow-x:auto;overscroll-behavior-x:contain;
+    scroll-snap-type:x proximity;padding-bottom:8px;
+  }
+  .compare > .sys{scroll-snap-align:start}
+  .swipe-hint{display:block}
+}
+
+.sys{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow);
+  min-width:0;
+}
+.sys[data-k="hybrid"]{border-color:#a9c9e8;box-shadow:0 0 0 3px var(--hybrid-soft),var(--shadow)}
+
+.sys-head{padding:12px 14px 11px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sys[data-k="hybrid"] .sys-head{background:var(--hybrid-soft)}
+.sys[data-k="gemini"] .sys-head{background:var(--gemini-soft)}
+.sys[data-k="lstm"]   .sys-head{background:var(--lstm-soft)}
+.sys-top{display:flex;align-items:center;gap:8px}
+.rank{
+  width:19px;height:19px;border-radius:6px;flex:none;display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#fff;
+}
+.sys[data-k="hybrid"] .rank{background:var(--hybrid)}
+.sys[data-k="gemini"] .rank{background:var(--gemini)}
+.sys[data-k="lstm"]   .rank{background:var(--lstm)}
+.sys-title{font-weight:650;font-size:13.5px;min-width:0;overflow-wrap:anywhere}
+.badge{
+  margin-left:auto;font-size:9.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 8px;border-radius:99px;
+  background:var(--hybrid);color:#fff;flex:none;
+}
+.sys-why{font-size:11.5px;color:var(--text2);margin-top:4px}
+
+/* headline rubric score - the metric the thesis ranking rests on */
+.quality{
+  display:flex;align-items:baseline;gap:9px;padding:11px 14px;
+  border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;
+}
+.quality .qv{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.quality .qmax{font-size:12px;color:var(--text3);font-weight:600}
+.quality .qk{
+  margin-left:auto;font-size:9.5px;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.06em;font-weight:650;text-align:right;line-height:1.35;
+}
+.sys[data-k="hybrid"] .quality .qv{color:var(--hybrid)}
+.sys[data-k="gemini"] .quality .qv{color:var(--gemini)}
+.sys[data-k="lstm"]   .quality .qv{color:var(--lstm)}
+.quality.win{background:var(--good-soft)}
+.quality.win .qk{color:var(--good)}
+.qbar{height:5px;background:var(--border);border-radius:99px;overflow:hidden;
+      flex:1 1 50px;max-width:120px;align-self:center}
+.qbar i{display:block;height:100%;border-radius:99px}
+.sys[data-k="hybrid"] .qbar i{background:var(--hybrid)}
+.sys[data-k="gemini"] .qbar i{background:var(--gemini)}
+.sys[data-k="lstm"]   .qbar i{background:var(--lstm)}
+
+.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--border)}
+.metric{background:var(--surface);padding:9px 12px;position:relative;min-width:0}
+.metric .k{
+  font-size:9.5px;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.06em;font-weight:650;
+}
+.metric .v{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;line-height:1.35}
+.v.good{color:var(--good)} .v.warn{color:var(--warn)} .v.bad{color:var(--bad)}
+.metric.best{background:var(--good-soft)}
+.metric.best .k{padding-right:28px}
+.metric.best::after{
+  content:"best";position:absolute;top:8px;right:10px;font-size:9px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;color:var(--good);
+}
+
+.answer{
+  padding:14px;font-size:13.5px;white-space:pre-wrap;flex:1;
+  max-height:min(360px,42vh);overflow-y:auto;color:#22303f;overflow-wrap:anywhere;
+}
+.flag{
+  margin:0 14px 12px;padding:9px 12px;border-radius:8px;font-size:12px;
+  background:var(--bad-soft);border:1px solid #f4cdc9;color:var(--bad);
+}
+.err{padding:16px;color:var(--bad);font-size:13px;overflow-wrap:anywhere}
+
+details{border-top:1px solid var(--border);padding:10px 14px}
+.card > details{border-top:none}
+summary{
+  cursor:pointer;font-size:10.5px;color:var(--text3);font-weight:650;
+  text-transform:uppercase;letter-spacing:.06em;list-style:none;
+}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";display:inline-block;transition:.15s}
+details[open] summary::before{content:"▾ "}
+summary:hover{color:var(--accent)}
+.claims{display:flex;flex-direction:column;gap:5px;margin-top:9px;
+        max-height:min(300px,36vh);overflow-y:auto}
+.claim{font-size:11.5px;padding:7px 10px;border-radius:7px;border-left:3px solid;
+       line-height:1.5;overflow-wrap:anywhere}
+.claim.grounded    {background:var(--good-soft);border-color:var(--good);color:#12604a}
+.claim.unsupported {background:var(--warn-soft);border-color:var(--warn);color:#7a4a00}
+.claim.contradicted{background:var(--bad-soft);border-color:var(--bad);color:#9c2f26}
+.passage{
+  margin-top:8px;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;font-size:11.5px;color:var(--text2);line-height:1.55;
+  overflow-wrap:anywhere;
+}
+.passage b{color:var(--text);font-weight:650}
+
+/* ── composer - pinned by flex, never overlaps the conversation ───────── */
+.composer{flex:none;padding:10px 4px 14px}
+.composer-inner{
+  display:flex;gap:10px;align-items:flex-end;background:var(--surface);
+  border:1px solid var(--border);border-radius:14px;padding:10px;box-shadow:var(--shadow);
+}
+.composer-inner:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.composer textarea{
+  flex:1;resize:none;border:none;box-shadow:none !important;min-height:26px;max-height:132px;
+  font-size:14px;padding:4px 6px;line-height:1.5;
+}
+.composer textarea:focus{border:none}
+.composer button{
+  padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:9px;
+  font-weight:650;cursor:pointer;font-size:13.5px;font-family:inherit;transition:.14s;
+  flex:none;
+}
+.composer button:hover:not(:disabled){background:#255fd4}
+.composer button:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:10.5px;color:var(--text3);text-align:center;margin-top:7px}
+
+/* ── misc ─────────────────────────────────────────────────────────────── */
+.empty{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:clamp(24px,5vh,46px) 24px;text-align:center;box-shadow:var(--shadow);
+}
+.empty .big{font-size:30px;margin-bottom:8px}
+.empty h3{font-size:16px;font-weight:650;margin-bottom:6px}
+.empty p{font-size:13px;color:var(--text2);max-width:560px;margin:0 auto}
+.flow{
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  margin-top:18px;font-size:11.5px;color:var(--text2);
+}
+.flow i{font-style:normal;padding:4px 11px;border-radius:99px;border:1px solid var(--border)}
+.flow i.h{background:var(--hybrid-soft);border-color:#bcd8f2;color:#10457c;font-weight:650}
+.flow i.g{background:var(--gemini-soft);border-color:#f6ddc0;color:#8a4c0d}
+.flow i.l{background:var(--lstm-soft);border-color:#d5dde1;color:#4a5b64}
+.flow span{color:var(--text3)}
+
+.loading{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:26px;text-align:center;color:var(--text2);font-size:13px;box-shadow:var(--shadow);
+}
+.spin{
+  display:inline-block;width:13px;height:13px;border:2px solid var(--border);
+  border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;
+  vertical-align:-2px;margin-right:7px;
+}
+@keyframes s{to{transform:rotate(360deg)}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--text3)}
+.legend span{display:flex;align-items:center;gap:6px}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+.disclaimer{
+  flex:none;padding:0 20px 10px;text-align:center;color:var(--text3);font-size:10.5px;
+}
+.scrim{
+  display:none;position:fixed;inset:var(--header-h) 0 0;background:rgba(16,32,64,.34);
+  z-index:35;
+}
+
+/* ── narrow screens: sidebar becomes a drawer ─────────────────────────── */
+@media (max-width:960px){
+  main{grid-template-columns:minmax(0,1fr)}
+  .menu-btn{display:block;order:-1}
+  header .sub{display:none}
+  .sidebar{
+    position:fixed;top:var(--header-h);left:0;bottom:0;width:min(320px,86vw);
+    background:var(--bg);border-right:1px solid var(--border);z-index:36;
+    padding:16px;transform:translateX(-102%);transition:transform .2s ease;
+    box-shadow:6px 0 20px rgba(16,32,64,.09);
+  }
+  .sidebar.open{transform:none}
+  .scrim.show{display:block}
+  .chat{padding:0 14px}
+  .thread-wrap{padding:14px 0 6px}
+  .composer{padding:8px 0 12px}
+}
+@media (max-width:560px){
+  header{padding:10px 14px;gap:10px}
+  header h1{font-size:14px}
+  .chip{font-size:10px;padding:3px 8px}
+  .bubble{max-width:92%}
+}
+/* very short windows - claw back vertical space */
+@media (max-height:620px){
+  .answer{max-height:34vh}
+  .empty{padding:18px}
+  .hint{display:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <button class="menu-btn" id="menu" aria-label="Toggle patient profile panel">☰</button>
+  <div class="brand">
+    <div class="logo">✚</div>
+    <div class="brand-txt">
+      <h1>Personalised Medical Chatbot</h1>
+      <div class="sub">Mastan Vali Shaik (24226807) · MSc Artificial Intelligence · National College of Ireland</div>
+    </div>
+  </div>
+  <div id="status"><span class="chip"><i class="spin"></i>starting…</span></div>
+</header>
+
+<div class="scrim" id="scrim"></div>
+
+<main>
+  <!-- ── sidebar ──────────────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="card">
+      <h2>Patient profile</h2>
+      <label for="age">Age</label>
+      <input id="age" type="number" value="45" min="1" max="120">
+      <label for="conditions">Conditions</label>
+      <input id="conditions" value="diabetes, hypertension">
+      <label for="medications">Medications</label>
+      <input id="medications" value="metformin, lisinopril">
+      <p class="note" style="margin-top:12px">This profile is sent to the Gemini
+        and Hybrid systems with every question. LSTM Only returns a stored passage
+        and cannot use it — which is exactly what the personalisation score measures.</p>
+    </div>
+
+    <div class="card">
+      <h2>Try a question</h2>
+      <div class="examples" id="examples"></div>
+    </div>
+
+    <div class="card">
+      <h2>How to read the answers</h2>
+      <div class="legend" style="margin-bottom:10px">
+        <span><i class="sw" style="background:var(--good)"></i>grounded</span>
+        <span><i class="sw" style="background:var(--warn)"></i>unsupported</span>
+        <span><i class="sw" style="background:var(--bad)"></i>contradicted</span>
+      </div>
+      <p class="note">Every sentence is checked against the passages the BiLSTM
+        retrieved. <b>Hallucination</b> = unsupported + contradicted claims; lower
+        is better. <b>Personalisation</b> = how much of this patient's own record
+        the answer actually uses.</p>
+      <p class="note">LSTM Only returns a passage verbatim, so it should read close
+        to 0% hallucination — that is the built-in check that the detector works.
+        It scores near zero on personalisation for the same reason, and finishes
+        last on overall quality in the thesis evaluation.</p>
+      <p class="note">Live scores use the retrieved passages only; the evaluation in
+        <code>outputs/</code> also folds in the gold MedQuAD answer, so the two
+        sets of numbers are not directly comparable.</p>
+    </div>
+  </aside>
+
+  <!-- ── chat column ──────────────────────────────────────────────────── -->
+  <section class="chat">
+    <div class="thread-wrap" id="threadWrap">
+      <div class="thread" id="thread">
+        <div class="empty" id="empty">
+          <div class="big">🩺</div>
+          <h3>Ask a medical question</h3>
+          <p>Your question is answered three ways at once, and every sentence of every
+             answer is scored for hallucination against the retrieved evidence.</p>
+          <div class="flow">
+            <i class="h">1 · Hybrid (LSTM + Gemini)</i><span>›</span>
+            <i class="g">2 · Gemini only</i><span>›</span>
+            <i class="l">3 · LSTM only</i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-inner">
+        <textarea id="q" rows="1" placeholder="e.g. what are symptoms of diabetes"></textarea>
+        <button id="ask">Ask</button>
+      </div>
+      <div class="hint">Enter to send · Shift+Enter for a new line</div>
+    </div>
+  </section>
+</main>
+
+<div class="disclaimer">Not medical advice. Consult a qualified healthcare professional for actual medical guidance.</div>
+
+<script>
+/* Display order is the thesis claim, strongest first: Hybrid › Gemini › LSTM. */
+const ORDER = ["hybrid", "gemini", "lstm"];
+const META = {
+  hybrid:{title:"Hybrid (LSTM + Gemini)", why:"BiLSTM retrieves grounding, Gemini writes the answer for this patient.", badge:"Proposed"},
+  gemini:{title:"Gemini Only",  why:"Fluent and personalised, but nothing anchors it to a verified source."},
+  lstm:  {title:"LSTM Only",    why:"Verbatim from MedQuAD — faithful to its source, but generic and not personalised."}
+};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?"":s).replace(/[&<>"']/g,
+  c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct = x => (x==null ? "—" : (x*100).toFixed(0)+"%");
+const ms  = x => (x==null ? "—" : x>=1000 ? (x/1000).toFixed(1)+"s" : Math.round(x)+"ms");
+
+function profile(){
+  return {age:$("age").value, conditions:$("conditions").value,
+          medications:$("medications").value};
+}
+
+/* lower is better for hallucination, higher is better for the rest */
+function cls(v, good, warn, invert){
+  if(v==null) return "";
+  if(invert) return v<=good ? "good" : v<=warn ? "warn" : "bad";
+  return v>=good ? "good" : v>=warn ? "warn" : "bad";
+}
+
+/* scroll the conversation pane, not the document */
+function revealTurn(el){
+  const wrap = $("threadWrap");
+  wrap.scrollTop = Math.max(0, el.offsetTop - 8);
+}
+
+async function status(){
+  try{
+    const s = await (await fetch("/api/status")).json();
+    const el = $("status");
+    if(s.error){
+      el.innerHTML = `<span class="chip off">error: ${esc(s.error).slice(0,110)}</span>`;
+      return true;
+    }
+    if(!s.ready){
+      el.innerHTML = `<span class="chip"><i class="spin"></i>${esc(s.progress)}</span>`;
+      return false;
+    }
+    el.innerHTML =
+      `<span class="chip on">ready</span>` +
+      `<span class="chip">KB ${s.kb_size.toLocaleString()} passages</span>` +
+      `<span class="chip">retriever: BiLSTM</span>` +
+      `<span class="chip ${s.gemini?"on":"off"}">Gemini ${s.gemini?"connected":"no API key"}</span>`;
+    $("ask").disabled = false;
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ── one system column ──────────────────────────────────────────────── */
+function card(r, best){
+  const k = r.key || "lstm";
+  const m = META[k] || {title:r.system, why:""};
+  const rank = ORDER.indexOf(k) + 1;
+  const head = `<div class="sys-head">
+      <div class="sys-top">
+        <span class="rank">${rank}</span>
+        <span class="sys-title">${esc(m.title)}</span>
+        ${m.badge ? `<span class="badge">${esc(m.badge)}</span>` : ""}
+      </div>
+      <div class="sys-why">${esc(m.why)}</div>
+    </div>`;
+
+  if(!r.ok){
+    return `<div class="sys" data-k="${k}">${head}
+      <div class="err"><b>This system failed.</b><br>${esc(r.error)}</div></div>`;
+  }
+
+  const n = r.numeric || {};
+  const bestCls = (name, value) =>
+    (value!=null && best[name]!=null && Math.abs(value-best[name])<1e-9) ? " best" : "";
+
+  const claims = (r.claims||[]).map(c =>
+    `<div class="claim ${esc(c.label)}">${esc(c.text)}</div>`).join("");
+  const numFlag = n.has_unsupported_numeric
+    ? `<div class="flag"><b>Unsupported figures:</b> ${esc((n.unsupported_numeric||[]).join(", "))}
+       — stated in the answer but absent from the evidence.</div>` : "";
+  const ctx = (r.context||[]).map(p =>
+    `<div class="passage"><b>#${p.rank} · score ${p.score}</b><br>${esc(p.answer)}</div>`).join("");
+
+  const qWin = (r.quality!=null && best.quality!=null &&
+                Math.abs(r.quality-best.quality)<1e-9) ? " win" : "";
+  const qBlock = r.quality==null ? "" : `<div class="quality${qWin}">
+      <span class="qv">${r.quality.toFixed(1)}</span><span class="qmax">/ 100</span>
+      <span class="qbar"><i style="width:${Math.max(2,r.quality)}%"></i></span>
+      <span class="qk">response<br>quality</span>
+    </div>`;
+
+  return `<div class="sys" data-k="${k}">
+    ${head}
+    ${qBlock}
+    <div class="metrics">
+      <div class="metric${bestCls("hallucination", r.hallucination_rate)}">
+        <div class="k">Hallucination</div>
+        <div class="v ${cls(r.hallucination_rate,.15,.35,true)}">${pct(r.hallucination_rate)}</div></div>
+      <div class="metric${bestCls("groundedness", r.groundedness)}">
+        <div class="k">Grounded</div>
+        <div class="v ${cls(r.groundedness,.7,.4)}">${pct(r.groundedness)}</div></div>
+      <div class="metric${bestCls("personalisation", r.personalisation)}">
+        <div class="k">Personalisation</div>
+        <div class="v ${cls(r.personalisation,.5,.25)}">${pct(r.personalisation)}</div></div>
+      <div class="metric">
+        <div class="k">Latency</div>
+        <div class="v">${ms(r.latency_ms)}</div></div>
+    </div>
+    <div class="answer">${esc(r.answer)}</div>
+    ${numFlag}
+    ${claims ? `<details><summary>Claim check (${r.n_claims})</summary>
+       <div class="claims">${claims}</div></details>` : ""}
+    ${ctx ? `<details><summary>Retrieved context (${r.context.length})</summary>${ctx}</details>` : ""}
+  </div>`;
+}
+
+/* ── plain-language summary of what just happened ───────────────────── */
+function verdict(byKey){
+  const h = byKey.hybrid, g = byKey.gemini, l = byKey.lstm;
+  if(!h || !h.ok) return "";
+
+  /* headline: the rubric ranking, which is what the thesis claim rests on */
+  const scored = ORDER.map(k => byKey[k])
+    .filter(r => r && r.ok && r.quality!=null);
+  if(scored.length === 3){
+    const ranked = [...scored].sort((a,b) => b.quality - a.quality);
+    const names = {hybrid:"Hybrid", gemini:"Gemini only", lstm:"LSTM only"};
+    const chain = ranked.map(r => `${names[r.key]} ${r.quality.toFixed(0)}`).join(" › ");
+    const holds = ranked.map(r => r.key).join(",") === "hybrid,gemini,lstm";
+    const extra = (h.personalisation!=null && l.personalisation!=null &&
+                   h.personalisation > l.personalisation)
+      ? ` Hybrid uses ${pct(h.personalisation)} of this patient's record; retrieval alone uses ${pct(l.personalisation)}.`
+      : "";
+    return `<div class="verdict"><span class="ico">${holds ? "✓" : "•"}</span><div>
+        <b>Response quality /100:</b> ${esc(chain)}${holds
+          ? " — the thesis ranking Hybrid &gt; LLM &gt; ML holds on this question." : "."}
+        ${extra}</div></div>`;
+  }
+
+  /* fall back to personalisation if the rubric judge was unavailable */
+  if(h.personalisation==null || !l || !l.ok) return "";
+  return `<div class="verdict"><span class="ico">✓</span><div>
+      <b>Hybrid:</b> ${pct(h.hallucination_rate)} hallucination ·
+      ${pct(h.personalisation)} personalisation against
+      ${pct(l.personalisation)} for retrieval alone.</div></div>`;
+}
+
+/* ── one conversation turn ──────────────────────────────────────────── */
+function turn(data){
+  const byKey = {};
+  (data.results||[]).forEach(r => { byKey[r.key] = r; });
+  const ok = (data.results||[]).filter(r => r.ok);
+
+  /* only flag a winner when the systems actually differ on that metric */
+  const pick = (name, fn) => {
+    const vals = ok.map(r => r[name]).filter(v => v!=null);
+    if(vals.length < 2 || Math.max(...vals) - Math.min(...vals) < 1e-9) return null;
+    return fn(...vals);
+  };
+  const best = {
+    quality:        pick("quality", Math.max),
+    hallucination:  pick("hallucination_rate", Math.min),
+    groundedness:   pick("groundedness", Math.max),
+    personalisation:pick("personalisation", Math.max),
+  };
+
+  const cols = ORDER.filter(k => byKey[k]).map(k => card(byKey[k], best)).join("");
+  const ev = (data.evidence_passages||[]).map(p =>
+    `<div class="passage"><b>#${p.rank} · score ${p.score} · ${esc(p.question)}</b><br>${esc(p.answer)}</div>`
+  ).join("");
+
+  const el = document.createElement("div");
+  el.className = "turn";
+  el.innerHTML =
+    `<div class="bubble-row">
+       <div class="bubble">${esc(data.question)}</div>
+       <div class="avatar">You</div>
+     </div>
+     ${verdict(byKey)}
+     <div class="compare">${cols}</div>
+     <div class="swipe-hint">swipe the three panels sideways to compare →</div>
+     ${ev ? `<div class="card" style="padding:0"><details>
+        <summary>Retrieved evidence — the passages every answer was scored against
+        (${data.evidence_passages.length})</summary>${ev}</details></div>` : ""}`;
+  return el;
+}
+
+/* ── ask ────────────────────────────────────────────────────────────── */
+let busy = false;
+
+async function ask(){
+  const q = $("q").value.trim();
+  if(!q || busy) return;
+  busy = true;
+  $("ask").disabled = true;
+  if($("empty")) $("empty").remove();
+  closeDrawer();
+
+  const pending = document.createElement("div");
+  pending.className = "turn";
+  pending.innerHTML =
+    `<div class="bubble-row">
+       <div class="bubble">${esc(q)}</div><div class="avatar">You</div>
+     </div>
+     <div class="loading"><i class="spin"></i>Answering with all three systems and
+       checking every claim against the evidence…</div>`;
+  $("thread").appendChild(pending);
+  revealTurn(pending);
+  $("q").value = "";
+  autosize();
+
+  try{
+    const res = await fetch("/api/ask", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({question:q, profile:profile()})
+    });
+    const data = await res.json();
+    if(data.error){
+      pending.querySelector(".loading").outerHTML =
+        `<div class="card err">${esc(data.error)}</div>`;
+    }else{
+      data.question = data.question || q;
+      const el = turn(data);
+      $("thread").replaceChild(el, pending);
+      revealTurn(el);
+    }
+  }catch(e){
+    const box = pending.querySelector(".loading");
+    if(box) box.outerHTML = `<div class="card err">${esc(String(e))}</div>`;
+  }finally{
+    busy = false;
+    $("ask").disabled = false;
+    if(window.matchMedia("(min-width:961px)").matches) $("q").focus();
+  }
+}
+
+/* ── composer behaviour ─────────────────────────────────────────────── */
+function autosize(){
+  const t = $("q");
+  t.style.height = "auto";
+  t.style.height = Math.min(t.scrollHeight, 132) + "px";
+}
+$("q").addEventListener("input", autosize);
+$("ask").addEventListener("click", ask);
+$("q").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); ask(); }
+});
+
+/* ── sidebar drawer (narrow screens only) ───────────────────────────── */
+function closeDrawer(){
+  $("sidebar").classList.remove("open");
+  $("scrim").classList.remove("show");
+}
+$("menu").addEventListener("click", () => {
+  const open = $("sidebar").classList.toggle("open");
+  $("scrim").classList.toggle("show", open);
+});
+$("scrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", e => { if(e.key === "Escape") closeDrawer(); });
+
+fetch("/api/examples").then(r=>r.json()).then(list=>{
+  $("examples").innerHTML = list.map(x =>
+    `<button data-q="${esc(x.q)}"><span class="tag">${esc(x.label)}</span>${esc(x.q)}</button>`
+  ).join("");
+  document.querySelectorAll("#examples button").forEach(b =>
+    b.addEventListener("click", () => { $("q").value = b.dataset.q; autosize(); ask(); }));
+});
+
+$("ask").disabled = true;
+(async function poll(){
+  const done = await status();
+  if(!done) setTimeout(poll, 1500);
+})();
+</script>
+</body>
+</html>
