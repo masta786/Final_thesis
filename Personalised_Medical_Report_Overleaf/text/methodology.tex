@@ -1,0 +1,50 @@
+\section{Research Methodology}
+\label{sec:Methodology}
+
+This study follows the CRISP-DM framework \citep{wirth2000}, adapted for a comparative evaluation. Business understanding and data understanding are covered in Sections 1 and 3.1, data preparation and modelling in Sections 3.2--4, and evaluation in Section 7. A within-subjects design is used, where every system answers the same questions for the same simulated patient. This allows paired statistical comparisons while reducing variation caused by different test cases.
+
+\subsection{Dataset and Preparation}
+
+The MedQuAD dataset \citep{abacha2019} contains medical question-answer pairs collected from trusted National Institutes of Health sources. Answers shorter than 60 characters were removed, and 3,000 pairs were randomly selected using a fixed seed. The dataset was divided into training (70\%), validation (10\%), and testing (20\%) sets.
+
+For retrieval, all text was converted to lowercase and punctuation was removed. Original formatting was preserved for responses presented to users and the evaluation model.
+
+A single simulated patient profile was used throughout the study: a 45-year-old patient with diabetes and hypertension taking metformin and lisinopril. Keeping the profile constant ensured that differences in performance resulted from the systems rather than changes in patient information.
+
+\subsection{Systems Compared}
+
+Three systems were evaluated.
+
+\textbf{System 1 (ML Only)} used a BiLSTM retriever followed by an extractive rule-based response generator. The retriever selected the most relevant passage, while the rule-based component extracted important sentences and added safety advice when required.
+
+\textbf{System 2 (Gemini Only)} generated responses using Gemini 3.5 Flash Lite based only on the user question and patient profile.
+
+\textbf{System 3 (Hybrid)} combined retrieval with language generation. Up to three relevant passages were retrieved, summarised, and supplied to Gemini together with the patient profile before generating the final response.
+
+Systems 2 and 3 shared the same base prompt. The only difference was the inclusion of retrieved evidence in the hybrid system. The generation temperature was fixed at zero to ensure reproducible outputs.
+
+\subsection{Knowledge-Base Coverage Conditions}
+
+Two experimental conditions were evaluated.
+
+In the \textbf{full-coverage} condition, the complete knowledge base was available during retrieval, representing a realistic deployment scenario.
+
+In the \textbf{leave-one-out} condition, the source document corresponding to each question was removed before retrieval. This ensured that no direct answer was available and allowed the effect of limited knowledge-base coverage to be evaluated.
+
+\subsection{Evaluation Metrics}
+
+Retrieval performance was evaluated using Recall@1, Recall@5, Recall@10, and Mean Reciprocal Rank (MRR), treating the original source document as the relevant result.
+
+Response quality was evaluated by Gemini 3.1 Flash Lite using four criteria: grounding (30), personalisation (25), helpfulness (25), and safety (20). The evaluator was unaware of which system generated each response.
+
+Faithfulness was measured independently through claim-level verification. Each response was divided into individual claims and compared with the supporting evidence. Numerical values such as medication doses and frequencies were checked for exact agreement.
+
+\subsection{Statistical Analysis}
+
+System comparisons were performed using paired t-tests together with Wilcoxon signed-rank tests. Holm correction \citep{holm1979} was applied to control the family-wise error rate across multiple comparisons. Cohen's d \citep{cohen1988} was used to measure effect size, while bias-corrected bootstrap confidence intervals with 5,000 resamples were calculated for all mean scores \citep{efron1993}. Reporting both statistical significance and effect size provides a more reliable interpretation of system performance.
+
+\subsection{Ethical Considerations and Threats to Validity}
+
+This research did not involve human participants or real patient data. The patient profile was synthetic, and the MedQuAD dataset is publicly available. The developed system is intended solely as a research prototype and is not suitable for clinical use.
+
+Several limitations should be considered. Although a different Gemini model was used for evaluation, LLM-based judges may still introduce bias \citep{zheng2023}. Prompt settings were tuned using an initial subset of the data before evaluation on a separate held-out set. In addition, using a single simulated patient profile limits the generalisability of the personalisation results. Finally, the relatively small dataset means that knowledge-base coverage varies across questions, which is why coverage is treated as an experimental factor in this study.

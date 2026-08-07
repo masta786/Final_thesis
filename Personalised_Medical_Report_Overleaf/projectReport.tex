@@ -1,0 +1,192 @@
+\documentclass[11pt,a4paper]{article}
+
+%% -------------------------------
+%% NCI MSc Research Project Template      
+%% -------------------------------
+
+
+% ----------------------------------------------------------------
+% Report - Main document
+% ----------------------------------------------------------------
+
+%Project Type Switch -- change this if and only if you are doing an industry Internship
+\newif\ifindustry
+
+\industryfalse
+% \industrytrue
+
+%% ---------------------------------
+%% |      Additional packages      |
+%% ---------------------------------
+
+\usepackage[british,UKenglish]{babel}  %% Language
+\usepackage[a4paper, margin=1in]{geometry} %% margins
+%% \usepackage{cite} must not be loaded alongside natbib - natbib warns about it
+%% and the two redefine \cite against each other. natbib's `sort' option does
+%% the job cite was providing.
+\usepackage[sort]{natbib} %% References -- Harvard referencing style
+\usepackage{graphicx} %http://en.wikibooks.org/wiki/LaTeX/Importing_Graphics#Graphics_storage
+\usepackage[export]{adjustbox}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{tikz}
+\usepackage{algorithm} % Code-Listings
+\usepackage{algorithmic} % Code-Listings
+% see http://www.ctan.org/tex-archive/macros/latex/contrib/algorithm2e/algorithm2e.pdf
+% for more sophisticated algorithm listings
+\usepackage{amsmath,amsfonts,amssymb}	% AMS mathematical facilities, fonts and symbols
+\usepackage{lastpage}
+\usepackage{datetime}
+%% Harvard citation punctuation. natbib driving dcu.bst otherwise separates the
+%% author from the year with a semicolon - '(Lewis et al.; 2020)' - which is not
+%% Harvard. This restores '(Lewis et al., 2020; Shuster et al., 2021)'.
+\bibpunct{(}{)}{;}{a}{,}{,}
+
+%% --- added for this report: booktabs rules, p-column modifiers, caption styling
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{microtype}
+\captionsetup{font=small,labelfont=bf,skip=5pt,belowskip=3pt}
+\renewcommand{\arraystretch}{1.12}
+%% Let floats fill more of a page before LaTeX defers them, so a table near a page
+%% break does not push over and leave a band of white space behind it.
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.80}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.80}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{5}
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+%% 31 Harvard entries at full size and full leading run to three pages alone. The
+%% reference list is scanned rather than read, so it carries the compression.
+\setlength{\bibsep}{1pt plus 0.2ex}
+\renewcommand{\bibfont}{\footnotesize}
+\usepackage[bookmarks=true, colorlinks=false]{hyperref} % Links - must be last package
+
+\DeclareGraphicsExtensions{.pdf,.png,.jpg}
+\graphicspath{{./figures/}} %Use curly braces for each path to add 
+
+%% ---------------------------------
+%% | Information about the report  |
+%% ---------------------------------
+
+% Uncomment one of the following, according to your module name
+\newcommand{\mytype}{MSc Research Project}
+%\newcommand{\mytype}{MSc Research Project}
+%\newcommand{\mytype}{MSc (Research) Practicum}
+%\newcommand{\mytype}{MSc Internship}
+
+% Uncomment one of the following, according to your programme
+\newcommand{\mystream}{Artificial Intelligence}
+%\newcommand{\mystream}{Cloud Computing}
+%\newcommand{\mystream}{Data Analytics}
+%\newcommand{\mystream}{Cybersecurity}
+%\newcommand{\mystream}{Artificial Intelligence}
+%\newcommand{\mystream}{Artificial Intelligence for Business}
+%\newcommand{\mystream}{FinTech}
+%\newcommand{\mystream}{Open Data Practice}
+
+
+\newcommand{\myname}{Mastan Vali Shaik}
+\newcommand{\studentID}{24226807}
+\newcommand{\mytitle}{Personalised Medical Question Answering: A Matched-Prompt Comparison of Neural Retrieval, a Large Language Model, and a Retrieval-Augmented Hybrid}
+
+\newcommand{\supervisor}{Devanshu Anand}
+\newcommand{\supervisortwo}{} % for Internship with a clear supervisor only!
+
+
+%% -------------------------------
+%% |  Information for PDF file   |
+%% -------------------------------
+%% Auto-Fill this information
+\hypersetup{
+ pdfauthor={\myname},
+ pdftitle={\mytitle},
+ pdfsubject={\mytype},
+ pdfkeywords={\mystream}
+}
+
+%% ---------------------------------
+%% | ToDo Marker - only for draft! |
+%% ---------------------------------
+% Remove all \todo instances for the final version!
+\setlength{\marginparwidth}{20mm}
+
+\newcommand{\margtodo}
+{\marginpar{\textbf{\textcolor{red}{ToDo}}}{}}
+
+\newcommand{\todo}[1]
+{{\textbf{\textcolor{red}{(\margtodo{}#1)}}}{}}
+
+
+% Describe separation hints here:
+\hyphenation{
+per-son-al-i-sa-tion
+hal-lu-ci-na-tion
+re-triev-al
+aug-men-ta-tion
+bi-di-rec-tion-al
+di-men-sion-al
+re-pro-duc-i-ble
+}
+
+%% TeX will not hyphenate the parts of an already-hyphenated compound, and this
+%% report is full of them ("128-dimensional", "retrieval-augmented"), which
+%% leaves the occasional line marginally overfull. \emergencystretch is only
+%% consulted for paragraphs TeX cannot otherwise set, so it costs nothing
+%% elsewhere.
+\emergencystretch=1em
+
+
+%% ------------------------
+%% |    Including files   |
+%% ------------------------
+% Every section is pulled in with \input below, so no \includeonly filter is
+% needed. Leaving one in place risks silently dropping a section if the list
+% and the \input calls ever drift apart.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Here, main documents begins %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\include{titlepage}
+
+%% -----------------
+%% |   Main part   |
+%% -----------------
+
+\title{\mytitle}%
+%\author{\myname \\ \studentID \\ \mytype\ in \mystream}%
+\author{\myname \\ \studentID}%
+\date{}
+\maketitle
+
+\pagestyle{plain}
+\pagenumbering{arabic}
+
+\input{text/abstract}
+\input{text/introduction}
+\input{text/relatedwork}
+\input{text/methodology}
+\input{text/design}
+\input{text/implementation}
+\input{text/outputs}
+\input{text/evaluation}
+\input{text/conclusion}
+
+
+%% --------------------
+%% |   Bibliography   |
+%% --------------------
+
+% Use dcu for Harvard references --> Make sure to use correctly the citep and citet commands
+\bibliographystyle{dcu}
+
+% Use IEEEtran for numeric references (but you will need to comment natbib package, change citep/citet commands to cite, and manually type the first author last name where needed.
+%\bibliographystyle{IEEEtran}
+
+\bibliography{refs}
+
+\end{document}

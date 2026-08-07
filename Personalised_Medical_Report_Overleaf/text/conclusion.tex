@@ -1,0 +1,37 @@
+\section{Discussion}
+\label{sec:Discussion}
+
+\subsection{Answering the Research Question}
+
+This study investigated whether combining a BiLSTM retriever with a large language model improves personalised medical question answering. The results show that the Hybrid system achieved the highest overall quality only when the knowledge base contained relevant information. Although the improvement over the standalone language model was not statistically significant, the Hybrid consistently produced more faithful responses by improving grounding and reducing unsupported claims.
+
+When the relevant document was removed from the knowledge base, the Hybrid no longer outperformed the language model. This confirms that retrieval augmentation is effective only when suitable supporting evidence is available. Overall, retrieval improves factual reliability rather than overall response quality.
+
+\subsection{Discussion of Findings}
+
+The findings are generally consistent with previous studies. \citet{shuster2021} reported that retrieval augmentation reduces hallucinations, and this study observed a similar \textbf{16\% reduction} in unsupported medical claims. Likewise, \citet{xiong2024} found that the effectiveness of medical RAG depends on knowledge-base coverage, which was confirmed through the leave-one-out experiment.
+
+One important observation differs from earlier work. Although retrieval improved grounding, it slightly reduced personalisation because the language model devoted more attention to retrieved evidence than to the patient profile. This trade-off suggests that retrieval augmentation improves factual reliability but does not automatically improve every aspect of response quality.
+
+The study also highlights the importance of reliable evaluation methods. The initial evaluation rubric introduced an anchoring effect that influenced the scoring process, demonstrating that LLM-based evaluation should be carefully designed and supported by independent verification methods.
+
+\subsection{Limitations}
+
+Several limitations should be considered when interpreting the findings.
+
+First, the evaluation included only \textbf{30} test questions, limiting the statistical power of the comparison between the Hybrid and standalone language model. Second, prompt design and retrieval parameters were refined before the final evaluation, although testing was performed on a separate held-out subset. Finally, the study used a single simulated patient profile, which limits the generalisability of the personalisation results. Future studies should evaluate a wider range of patient profiles and medical datasets.
+
+\section{Conclusion and Future Work}
+\label{sec:Conclusion}
+
+\subsection{Conclusion}
+
+This study compared three approaches for personalised medical question answering: a retrieval-only system, a standalone large language model, and a Retrieval-Augmented Generation (RAG) hybrid. The results showed that the Hybrid system produced the most faithful responses when the knowledge base contained relevant information, while the retrieval-only system remained the fastest and most factually constrained. However, the overall quality difference between the Hybrid and standalone language model was not statistically significant.
+
+The study also demonstrated that correcting the neural retriever substantially improved retrieval performance and highlighted the importance of carefully designing LLM-based evaluation methods. Overall, the findings suggest that retrieval augmentation is most valuable for improving factual reliability rather than overall response quality.
+
+\subsection{Future Work}
+
+Future work should evaluate the system using larger medical datasets and a broader range of patient profiles. Replacing the BiLSTM retriever with biomedical embedding models such as BioBERT or Sentence-BERT may further improve retrieval quality. Another promising direction is to introduce retrieval-confidence estimation so that the system can automatically determine when retrieval should be used and when a standalone language model is more appropriate. Finally, evaluation by healthcare professionals would provide additional evidence of the clinical usefulness of the proposed system.
+
+\nocite{asai2024}

@@ -1,0 +1,262 @@
+\section{Evaluation and Critical Analysis}
+\label{sec:Evaluation}
+
+\subsection{Experiment 1: Evaluating the Assessment Method}
+
+Before comparing the three systems, the evaluation method itself was examined because all subsequent results depend on it. The original evaluation rubric ended with a worked example containing the scores \textbf{24, 18, 20, and 16}, giving a total of \textbf{78}. During the initial evaluation, the Hybrid system received a score of 78 on 25 of the 30 questions, while the Gemini-only system received the same score on 15 questions.
+
+To investigate whether the evaluation model was genuinely scoring responses or simply reproducing the example, three responses of different quality were evaluated five times at temperature zero using both the original rubric and a revised rubric containing placeholders and explicit scoring descriptors.
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:4}
+\noindent\textbf{Table \thetable. Rubric anchoring ablation (five repeated evaluations at temperature 0)}\par
+\medskip
+\begin{center}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.42\textwidth}>{\centering\arraybackslash}p{0.23\textwidth}>{\centering\arraybackslash}p{0.23\textwidth}}
+\toprule
+\textbf{Response quality} & \textbf{Old rubric (mean /100)} & \textbf{New rubric (mean /100)} \\
+\midrule
+Off-topic retrieved passage & \textbf{0.0} & \textbf{0.0} \\
+Generic but clinically correct & \textbf{78.0} & \textbf{77.4} \\
+Personalised, grounded and safe & \textbf{78.0} & \textbf{88.0} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+The results show that the original rubric consistently limited high-quality responses to a maximum score of \textbf{78}, indicating that the evaluation model was influenced by the worked example instead of assessing response quality independently. Consequently, the previously reported difference between the Hybrid and Gemini-only systems (68.1 vs. 66.7) was not reliable. A paired statistical test produced \textbf{p = 0.766} with 13 exact ties, indicating no significant difference.
+
+After replacing the worked example, the revised rubric produced a wider range of scores and removed the artificial ceiling. Because the evaluation was performed at temperature zero, all repeated runs produced identical results.
+
+\subsection{Experiment 2: Retrieval Quality}
+
+The second experiment evaluated the performance of the BiLSTM retriever. Five implementation issues were identified during development: pooling over padding tokens, mapping unknown words to the padding index, truncating passages to 50 tokens, training with a single random negative, and the absence of reranking. Together, these issues significantly reduced retrieval performance.
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:5}
+\noindent\textbf{Table \thetable. Retrieval quality over the 3,000-document corpus (600 test questions)}\par
+\medskip
+\begin{center}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.31\textwidth}>{\centering\arraybackslash}p{0.14\textwidth}>{\centering\arraybackslash}p{0.14\textwidth}>{\centering\arraybackslash}p{0.15\textwidth}>{\centering\arraybackslash}p{0.12\textwidth}}
+\toprule
+\textbf{Retriever} & \textbf{Recall@1} & \textbf{Recall@5} & \textbf{Recall@10} & \textbf{MRR} \\
+\midrule
+BiLSTM (original) & \textbf{0.010} & \textbf{0.035} & \textbf{0.073} & \textbf{0.034} \\
+TF-IDF + cosine & \textbf{0.315} & \textbf{0.667} & \textbf{0.717} & \textbf{0.463} \\
+BiLSTM (corrected) & \textbf{0.495} & \textbf{0.663} & \textbf{0.720} & \textbf{0.579} \\
+BiLSTM + TF-IDF rerank & \textbf{0.513} & \textbf{0.743} & \textbf{0.788} & \textbf{0.620} \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+The original BiLSTM retriever achieved a \textbf{Recall@1 of 0.010}, compared with \textbf{0.315} for the TF-IDF baseline, indicating that the neural retriever performed substantially worse than the classical approach. After correcting the implementation issues, \textbf{Recall@1 increased to 0.495}, while TF-IDF reranking further improved it to \textbf{0.513} with an \textbf{MRR of 0.620}.
+
+Overall, the corrected retriever outperformed the TF-IDF baseline by approximately \textbf{63\%} on Recall@1. These improvements also explain why the earlier Hybrid system generated more unsupported responses: the original retriever frequently returned irrelevant medical passages, which the language model then incorporated into its answers.
+
+\subsection{Experiment 3: Three-System Comparison}
+
+The primary experiment evaluated all three systems under \textbf{full knowledge-base coverage}. Table 6 summarises the results.
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:6}
+\noindent\textbf{Table \thetable. Response quality under full knowledge-base coverage (n = 30)}\par
+\medskip
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.18\textwidth}>{\centering\arraybackslash}p{0.105\textwidth}>{\centering\arraybackslash}p{0.115\textwidth}>{\centering\arraybackslash}p{0.115\textwidth}>{\centering\arraybackslash}p{0.11\textwidth}>{\centering\arraybackslash}p{0.10\textwidth}>{\centering\arraybackslash}p{0.11\textwidth}}
+\toprule
+\textbf{System} & \textbf{Quality /100} & \textbf{Grounding /30} & \textbf{Personal. /25} & \textbf{Helpful. /25} & \textbf{Safety /20} & \textbf{Halluc. rate} \\
+\midrule
+Hybrid (BiLSTM + Gemini) & \textbf{79.27} & \textbf{24.47} & 15.87 & 20.07 & 18.87 & \textbf{0.767} \\
+Gemini Only (LLM) & 78.23 & 20.87 & \textbf{18.20} & \textbf{20.37} & 18.80 & 0.913 \\
+ML Only (BiLSTM + rules) & 48.97 & 20.60 & 2.77 & 10.57 & 15.03 & 0.133 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+The Hybrid system achieved the highest overall quality score (\textbf{79.27}), followed closely by Gemini Only (\textbf{78.23}). Both language-model systems substantially outperformed the retrieval-only system (\textbf{48.97}), with the Hybrid exceeding ML Only by \textbf{30.3 points} (Cohen's $d$ = 1.15).
+
+The comparison between the Hybrid and Gemini Only systems is more balanced. Although the Hybrid scored \textbf{1.03 points} higher overall, the difference was not statistically significant ($p$ = 0.55). The main advantage of the Hybrid lies in factual grounding, scoring \textbf{24.47} compared with \textbf{20.87}, while reducing the hallucination rate from \textbf{0.913} to \textbf{0.767}, a relative reduction of approximately \textbf{16\%}. In contrast, Gemini Only achieved a higher personalisation score (\textbf{18.20} vs. \textbf{15.87}).
+
+These results suggest that retrieval mainly improves factual grounding, whereas the standalone language model produces more personalised responses. As a result, overall quality alone does not fully reflect the strengths of each system.
+
+\begin{center}
+\begin{minipage}{\textwidth}
+\centering
+\includegraphics[width=0.88\textwidth]{fig-quality-axes.png}
+\par\smallskip
+\begingroup
+\renewcommand{\thefigure}{7.1}
+\refstepcounter{figure}
+\label{fig:2}
+\small\textbf{Figure \thefigure.} Per-axis rubric scores for the three systems under full knowledge-base coverage.
+\endgroup
+\end{minipage}
+\end{center}
+
+The retrieval-only system achieved the lowest overall score but recorded the smallest hallucination rate (\textbf{0.133}) because it only returns retrieved information. However, its very low personalisation score (\textbf{2.77}) shows that it cannot adapt responses to individual patients.
+
+\subsection{Experiment 4: Knowledge-Base Coverage Ablation}
+
+The second experiment evaluated system performance after removing the correct source document from the knowledge base. The results are presented in Table 7.
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:7}
+\noindent\textbf{Table \thetable. Response quality under leave-one-out knowledge-base coverage (n = 30)}\par
+\medskip
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.18\textwidth}>{\centering\arraybackslash}p{0.105\textwidth}>{\centering\arraybackslash}p{0.115\textwidth}>{\centering\arraybackslash}p{0.115\textwidth}>{\centering\arraybackslash}p{0.11\textwidth}>{\centering\arraybackslash}p{0.10\textwidth}>{\centering\arraybackslash}p{0.11\textwidth}}
+\toprule
+\textbf{System} & \textbf{Quality /100} & \textbf{Grounding /30} & \textbf{Personal. /25} & \textbf{Helpful. /25} & \textbf{Safety /20} & \textbf{Halluc. rate} \\
+\midrule
+Gemini Only (LLM) & \textbf{78.70} & 22.47 & \textbf{17.40} & 20.37 & 18.47 & 0.891 \\
+Hybrid (BiLSTM + Gemini) & 78.10 & \textbf{22.67} & 16.63 & 20.10 & 18.70 & \textbf{0.889} \\
+ML Only (BiLSTM + rules) & 29.53 & 12.27 & 1.37 & 3.63 & 12.27 & 0.200 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+Removing the correct document had little effect on the two language-model systems. Gemini Only scored \textbf{78.70}, while the Hybrid achieved \textbf{78.10}, meaning the small advantage observed under full coverage disappeared. In contrast, the retrieval-only system dropped from \textbf{48.97} to \textbf{29.53}, showing that it depends heavily on the availability of relevant documents.
+
+The main effect is seen in grounding and hallucination. Under full coverage, the Hybrid achieved a \textbf{3.60-point} improvement in grounding and reduced hallucinations by \textbf{16\%}. When the correct document was removed, grounding scores became almost identical (\textbf{22.67} vs. \textbf{22.47}) and hallucination rates were also nearly the same (\textbf{0.889} vs. \textbf{0.891}). This indicates that retrieval augmentation is beneficial only when the knowledge base contains relevant evidence.
+
+\begin{center}
+\begingroup
+\renewcommand{\thefigure}{7.2}
+\refstepcounter{figure}
+\label{fig:3}
+\includegraphics[width=0.94\textwidth]{fig-coverage.png}
+\endgroup
+\end{center}
+
+Overall, the coverage experiment confirms that retrieval augmentation improves factual reliability only when relevant documents are available. When the required evidence is missing, the Hybrid behaves similarly to the standalone language model, while the retrieval-only system performs considerably worse.
+
+\subsection{Experiment 5: Efficiency and Computational Cost}
+
+System quality alone does not determine whether it is suitable for practical use. This experiment evaluates the computational cost of each architecture, including retrieval time, total response time, answer length, and response quality.
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:8}
+\noindent\textbf{Table \thetable. Cost profile of the three architectures}\par
+\medskip
+\begin{center}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.16\textwidth}>{\centering\arraybackslash}p{0.085\textwidth}>{\centering\arraybackslash}p{0.13\textwidth}>{\centering\arraybackslash}p{0.13\textwidth}>{\centering\arraybackslash}p{0.125\textwidth}>{\centering\arraybackslash}p{0.095\textwidth}>{\centering\arraybackslash}p{0.14\textwidth}}
+\toprule
+\textbf{System} & \textbf{Model Calls} & \textbf{Local Retrieval (ms)} & \textbf{End-to-End (ms)} & \textbf{Answer Length (words)} & \textbf{Quality /100} & \textbf{\shortstack{Hallucination\\Rate}} \\
+\midrule
+ML Only (BiLSTM + rules) & 0 & 11 & 11 & 81 & 49.0 & 0.133 \\
+Gemini Only (LLM) & 1 & 0 & 1497 & 160 & 78.2 & 0.913 \\
+Hybrid (BiLSTM + Gemini) & 2 & 11 & 1926 & 148 & 79.3 & 0.767 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+The BiLSTM retriever completed retrieval in a median of \textbf{11 ms}, representing only \textbf{0.6\%} of the Hybrid system's total response time. This indicates that retrieval itself adds very little computational cost, with most of the latency coming from the language model.
+
+The Hybrid system required \textbf{1926 ms}, compared with \textbf{1497 ms} for Gemini Only, making it approximately \textbf{29\%} slower because of the additional generation stage. In return, the Hybrid reduced unsupported clinical statements from \textbf{3.43} to \textbf{2.73} per response, improving factual reliability.
+
+The ML Only system was the fastest, generating responses in \textbf{11 ms} without external API calls. It also achieved the lowest hallucination rate (\textbf{0.133}). However, this came at the cost of very limited personalisation, demonstrating that computational efficiency alone is insufficient for high-quality patient-centred responses.
+
+\subsection{Statistical Significance and Effect Sizes}
+
+Table 9 presents the statistical comparison between the three systems under full knowledge-base coverage.
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:9}
+\noindent\textbf{Table \thetable. Pairwise statistical comparisons (n = 30)}\par
+\medskip
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.16\textwidth}>{\centering\arraybackslash}p{0.11\textwidth}>{\centering\arraybackslash}p{0.12\textwidth}>{\centering\arraybackslash}p{0.14\textwidth}>{\centering\arraybackslash}p{0.12\textwidth}>{\centering\arraybackslash}p{0.09\textwidth}>{\raggedright\arraybackslash}p{0.12\textwidth}}
+\toprule
+\textbf{Comparison} & \textbf{Mean Difference} & \textbf{Paired $t$ ($p$)} & \textbf{Holm-adjusted $p$} & \textbf{Wilcoxon ($p$)} & \textbf{Cohen's $d$} & \textbf{Verdict} \\
+\midrule
+Hybrid vs Gemini Only & +1.03 & 0.5471 & 0.5471 & 0.7843 & 0.11 & Not significant \\
+Hybrid vs ML Only & +30.30 & $7.3 \times 10^{-7}$ & $2.2 \times 10^{-6}$ & $5.7 \times 10^{-6}$ & 1.15 & Significant \\
+Gemini Only vs ML Only & +29.27 & $1.3 \times 10^{-6}$ & $2.6 \times 10^{-6}$ & $5.2 \times 10^{-6}$ & 1.11 & Significant \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+The results show that both language-model systems significantly outperform the retrieval-only system. However, the 1.03-point difference between the Hybrid and Gemini Only systems is not statistically significant. Although the Hybrid achieved the highest overall score, the available sample size was insufficient to demonstrate a reliable difference.
+
+The results therefore support one clear conclusion: retrieval augmentation improves factual reliability, while the overall quality difference between the Hybrid and standalone language model cannot be confirmed statistically.
+
+\subsection{Qualitative Analysis: One Question, Three Systems}
+
+Overall evaluation scores do not fully explain how the systems behave. Table 10 presents one representative example in which all three systems answered the same question, \textbf{``What is Nephrocalcinosis?}
+
+\par\medskip
+\noindent\begin{minipage}{\textwidth}
+\refstepcounter{table}
+\label{tab:10}
+\noindent\textbf{Table \thetable. Example responses from the three systems}\par
+\medskip
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.09\textwidth}>{\raggedright\arraybackslash}p{0.36\textwidth}>{\centering\arraybackslash}p{0.10\textwidth}>{\centering\arraybackslash}p{0.135\textwidth}>{\centering\arraybackslash}p{0.115\textwidth}>{\centering\arraybackslash}p{0.07\textwidth}}
+\toprule
+\textbf{System} & \textbf{Opening of Response (Excerpt)} & \textbf{Grounding} & \textbf{Personal\-isation} & \textbf{Hallucina\-tion} & \textbf{Total} \\
+\midrule
+ML Only & ``Nephrocalcinosis is a disorder in which there is excess calcium deposited in the kidneys... This is general information, not advice.'' & 30 / 30 & 5 / 25 & 0.00 & 68 \\
+Gemini Only & ``Calcium deposits build up within the tiny structures of your kidneys... For a 45-year-old like you managing diabetes and hypertension with metformin and lisinopril, protecting kidney function is especially critical.'' & 26 / 30 & 20 / 25 & 0.75 & 88 \\
+Hybrid & ``Excess deposition of calcium within the substance of the kidneys. People who have this condition may not experience any symptoms initially... For a 45-year-old living with diabetes and hypertension, your kidneys are already working hard.'' & 30 / 30 & 18 / 25 & 0.40 & 90 \\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{minipage}
+\par\medskip
+
+The example illustrates the strengths and weaknesses of each approach. The retrieval-only system provides accurate information but offers little personalisation. Gemini Only generates a personalised response but includes claims that are not fully supported by the available evidence. The Hybrid combines both approaches by grounding the response in retrieved medical information while still relating the explanation to the patient's condition.
+
+Although this example alone does not prove the overall findings, it clearly demonstrates the behavioural differences identified throughout the quantitative evaluation.
+
+\subsection{Answering the Research Question}
+
+The results show that the Hybrid system achieves the highest overall quality only when the knowledge base contains relevant information, and even then the improvement over the standalone language model is not statistically significant. However, the Hybrid consistently produces more faithful responses by improving grounding and reducing unsupported claims.
+
+When the relevant document is removed from the knowledge base, the Hybrid no longer outperforms the standalone language model. This indicates that the benefits of retrieval augmentation depend on knowledge-base coverage. Therefore, the main contribution of retrieval is improved factual reliability rather than higher overall response quality.
+
+\subsection{Limitations}
+
+Several limitations should be considered when interpreting these findings.
+
+First, the evaluation uses only \textbf{30} test questions. With an observed standard deviation of approximately \textbf{25} points, the Hybrid's \textbf{1.03-point} advantage over the language model is too small to detect reliably. In contrast, the differences between both language-model systems and the retrieval-only system are much larger and statistically detectable.
+
+Second, prompt wording and retrieval parameters were refined using an initial subset of the test data before evaluation on a separate held-out subset. Although this reduces bias in the reported results, future work should validate the approach using additional medical datasets.
+
+Finally, the experiments use a single simulated patient profile. This isolates the effect of personalisation but limits the generalisability of the findings to patients with different medical histories or conditions.

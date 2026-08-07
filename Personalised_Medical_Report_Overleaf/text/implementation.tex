@@ -1,0 +1,22 @@
+\section{Implementation}
+\label{sec:Implementation}
+
+This chapter describes the implementation of the proposed medical question answering system. The solution was developed in Python using PyTorch for the neural retriever, scikit-learn for retrieval and preprocessing, and Gemini for language generation. All experiments were performed on CPU, allowing the system to be trained and reproduced without specialised hardware.
+
+\subsection{Retrieval Model}
+
+The retrieval component is a Siamese BiLSTM encoder containing approximately 3.05 million trainable parameters. Unlike transformer-based retrievers, the model was trained from scratch, making its behaviour easier to analyse and reproduce.
+
+During training, each question is paired with its correct answer while the remaining answers in the batch are treated as negative examples using the InfoNCE objective. This encourages the model to distinguish between semantically similar medical documents instead of relying on shared vocabulary alone. As a result, semantically related questions and answers are represented by nearby vector embeddings, allowing relevant passages to be retrieved even when different wording is used.
+
+\subsection{Response Generation}
+
+During inference, dense retrieval is combined with TF-IDF similarity to improve retrieval accuracy. The retrieved passages are filtered using the topic and intent constraints described in Chapter 4 before being passed to the language model.
+
+Response generation is performed in two stages. The first stage extracts the medical facts relevant to the user's question, while the second generates a patient-focused response using these facts together with the patient profile. Restricting generated information to retrieved evidence improves factual reliability while allowing the language model to produce natural and personalised answers.
+
+\subsection{Response Verification}
+
+The generated responses are evaluated using two independent methods. First, Gemini 3.1 Flash Lite scores each response using the four-axis clinical rubric. To reduce evaluation bias, the judging model is different from the model used for generation, and responses are randomised before evaluation.
+
+Second, every response is verified through claim-level analysis. Individual claims are compared with the supporting evidence, and numerical information such as medication doses and frequencies is checked for exact agreement. Using both methods provides an additional level of confidence in the reported results.

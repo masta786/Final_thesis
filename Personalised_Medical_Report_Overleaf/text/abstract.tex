@@ -1,0 +1,15 @@
+\begin{abstract}
+
+Background: Patients with long-term health conditions often receive detailed advice during medical consultations but have limited support once they return home. Medical question answering systems can help bridge this gap. Retrieval-based systems usually provide reliable information from trusted sources, but the responses are often generic and do not consider the patient's individual circumstances. Large language models can generate personalised answers, although they may sometimes produce information that is not supported by reliable medical evidence.
+
+Objectives: This study truly investigates whether combining a neural retrieval model with a large language model improves the quality of personalised medical question answering compared with using either approach independently. It also examines the conditions under which retrieval augmentation is most effective.
+
+Methods: Three medical question answering systems that were developed using 3,000 question--answer pairs from the MedQuAD dataset. The first system combined a Siamese BiLSTM retriever with a rule-based response module. The second used Gemini 3.5 Flash Lite to generate responses directly from the user's question. The third was a hybrid Retrieval-Augmented Generation (RAG) system that combined retrieval with the language model. Both language-model systems used the same base prompt so that retrieval was the only experimental difference. Responses were evaluated by an independent model (Gemini 3.1 Flash Lite) using a four-axis clinical rubric. The generated answers were also reviewed through claim-level verification, and pairwise statistical comparisons were performed using Holm correction.
+
+Results: After correcting the five implementation issues in the retriever, Recall@1 improved from 0.010 to 0.513. An ablation experiment showed that a worked example included in the original evaluation rubric unintentionally limited scores to a maximum of 78, making the earlier finding unreliable (p = 0.766). When relevant information was available in the knowledge base, the hybrid system achieved the highest overall score (79.3), followed by the standalone language model (78.2) and the retrieval-only system (49.0). The hybrid approach also reduced hallucinated medical statements by 16\%, although this difference was not statistically significant. When the supporting document was removed from the knowledge base, the advantage of retrieval augmentation disappeared.
+
+Conclusions: The results indicate that retrieval augmentation improves the factual reliability of medical question answering when relevant information is available in the knowledge base. Its main benefit is improving faithfulness rather than producing more fluent responses. The study also highlights the importance of carefully designing evaluation prompts, as even a single example included in the judging rubric can influence the final evaluation.
+
+Keywords: medical question answering; retrieval-augmented generation; BiLSTM; personalisation; hallucination; LLM-as-a-Judge; MedQuAD.
+
+\end{abstract}

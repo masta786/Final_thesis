@@ -1,0 +1,44 @@
+\section{Design Specification}
+\label{sec:Design}
+
+\subsection{Architectural Overview}
+
+The proposed system follows an eight-stage pipeline. MedQuAD question-answer pairs are first cleaned and prepared to create the working corpus. Vocabulary construction and token encoding are then performed before the data is divided into training, validation, and test sets. During inference, two branches process the same input. The first uses a BiLSTM retriever to identify relevant documents, while the second generates responses directly using a large language model. The hybrid system combines retrieved facts with the patient profile to produce the final response. The last stage evaluates all three systems using the same evaluation framework.
+
+\begin{center}
+\begin{minipage}{\textwidth}
+\centering
+\includegraphics[width=0.40\textwidth]{fig-architecture.png}
+\par\smallskip
+\begingroup
+\renewcommand{\thefigure}{4.1}
+\refstepcounter{figure}
+\label{fig:1}
+\small\textbf{Figure \thefigure.} Eight-stage system architecture. Stages 5 and 6 process the same input independently, while Stage 7 combines their outputs.
+\endgroup
+\end{minipage}
+\end{center}
+
+\subsection{Retriever Specification}
+
+Four retrieval methods were evaluated: TF-IDF with cosine similarity, Random Forest using TF-IDF features \citep{breiman2001}, TextCNN \citep{kim2014}, and a Siamese BiLSTM. The BiLSTM was selected because it achieved the best retrieval performance while remaining lightweight enough to train efficiently without GPU hardware. Although transformer-based retrievers such as Sentence-BERT \citep{reimers2019} may achieve higher accuracy, a smaller model was chosen because it is easier to analyse and debug.
+
+The final retriever uses a single-layer bidirectional LSTM with 192 hidden units in each direction and 128-dimensional word embeddings. After masked mean pooling and L2 normalisation, each sentence is represented by a 384-dimensional embedding. A vocabulary of 20,000 words is used, with separate indices reserved for padding and unknown words. Questions are limited to 24 tokens and passages to 96 tokens. The model is trained using the InfoNCE objective with in-batch negatives, Adam optimisation, and eight training epochs.
+
+During retrieval, the top 50 dense results are reranked using an equal combination of dense similarity and TF-IDF cosine similarity. A topic filter removes unrelated passages, while a facet bonus favours passages whose intent matches the user's question, improving retrieval precision.
+
+\subsection{Prompt Design}
+
+Both language-model systems use the same base prompt to ensure a fair comparison. The prompt instructs the assistant to generate patient-centred responses by referring to at least one existing medical condition or medication and organising the answer into three parts: a direct response, its relevance to the patient, and advice on when to seek medical attention.
+
+Safety instructions prevent the model from suggesting medication dosages or making clinical diagnoses. The hybrid system includes one additional instruction requiring retrieved evidence to be used whenever available, while preventing unsupported numerical information from being generated. The retrieval process itself is never mentioned to the patient.
+
+\subsection{Design Rationale}
+
+The hybrid system was designed to combine the strengths of retrieval and language generation. Retrieval provides trustworthy supporting information but cannot personalise responses, while language models produce natural and personalised answers but may generate unsupported information. Combining both approaches aims to improve factual reliability without sacrificing readability.
+
+The retriever first selects relevant medical evidence, which is summarised into key facts before being passed to the language model together with the patient profile. This two-stage process was adopted because early experiments showed that asking the model to process long retrieved passages and personalise responses simultaneously reduced personalisation quality.
+
+Separating retrieval from generation also allows the knowledge base to be updated without retraining the language model. It additionally makes system errors easier to identify, as retrieval quality and response generation can be evaluated independently.
+
+Finally, the design assumes that retrieval augmentation is beneficial only when relevant supporting information exists in the knowledge base. If retrieval returns unrelated documents, the language model cannot compensate for incorrect evidence. This assumption is evaluated experimentally in Section 7.4.

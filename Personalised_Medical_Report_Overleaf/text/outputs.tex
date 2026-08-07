@@ -1,0 +1,25 @@
+\section{Outputs Summary}
+\label{sec:Outputs}
+
+The outputs produced during this project are summarised in Table 3. Several of these outputs, particularly the evaluation framework and claim-level verification method, can be reused in future medical question answering research.
+
+\refstepcounter{table}
+\label{tab:3}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.177\textwidth}>{\raggedright\arraybackslash}p{0.127\textwidth}>{\raggedright\arraybackslash}p{0.400\textwidth}>{\raggedright\arraybackslash}p{0.189\textwidth}}
+\toprule
+\textbf{Output} & \textbf{Type} & \textbf{Description} & \textbf{Intended user} \\
+\midrule
+Trained retrieval model & Model & Siamese BiLSTM encoder reaching Recall@1 of 0.513 against 0.315 for the classical baseline, with the benchmark over 600 held-out questions. & Researchers reusing the encoder \\
+Matched-prompt comparison protocol & Method & Design holding one base prompt constant across the augmented and unaugmented systems so retrieval is the only manipulated variable, run under two knowledge-base coverage conditions. & Researchers comparing RAG architectures \\
+Scored response corpus & Annotated data & Answers from three systems to the same held-out questions, each scored on four axes and audited claim by claim. & Examiner, researchers \\
+Evaluation instruments & Instruments & The four-axis clinical rubric, with the anchoring defect of Section 7.1 removed, and the non-LLM claim-level grounding audit. & Researchers evaluating clinical text \\
+Working demonstrator & Artefact & Interactive prototype answering patient questions against a stored profile, used for the demonstration video. & Examiner, end users \\
+Configuration manual & Document & Environment, data and execution details needed to reproduce every reported number; submitted separately from this report. & Examiner, researchers \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The project produced a trained BiLSTM retrieval model, a matched-prompt evaluation framework, a scored response dataset, reusable evaluation instruments, an interactive demonstration system, and a configuration manual containing the information required to reproduce the reported experiments.

@@ -1,0 +1,62 @@
+\section{Introduction}
+\label{sec:Introduction}
+
+\subsection{Background and Motivation}
+
+Long-term health conditions account for a large proportion of healthcare services in developed countries. Patients with conditions such as type 2 diabetes and hypertension manage their health every day by monitoring symptoms, taking medication, and deciding when medical attention is needed. Since medical consultations are usually short and infrequent, many of these decisions are made without immediate professional support.
+
+Large language models (LLMs) have created new opportunities for conversational medical assistants. They can generate fluent and natural responses, making them suitable for medical question answering. However, in healthcare, fluency alone is not enough. Responses must also be accurate, relevant to the patient, and safe when the model is uncertain. Incorrect medical information may have serious consequences.
+
+\citet{ji2023} showed that LLMs can generate convincing but incorrect information, while \citet{thirunavukarasu2023} argued that the main challenge in clinical deployment is verifying the reliability of generated responses. These limitations highlight the need for approaches that improve factual accuracy without losing the benefits of natural language interaction.
+
+\subsection{Problem Statement}
+
+Medical question answering systems generally follow one of two approaches. Retrieval-based systems return information from trusted medical documents, making them reliable but often unable to personalise responses. In contrast, large language models generate personalised answers but may produce unsupported or incorrect medical information.
+
+Retrieval-Augmented Generation (RAG) combines these approaches by providing the language model with relevant documents before generating a response \citep{lewis2020}. Although RAG has shown promising results, its effectiveness in medical question answering is still uncertain.
+
+\citet{xiong2024} found that retrieval improves responses only when relevant information is available, while \citet{gao2024} observed that many studies focus mainly on successful retrieval cases and rarely evaluate situations where retrieval fails.
+
+Evaluating medical question answering systems is another challenge. Traditional text-overlap metrics do not measure clinical usefulness or personalisation, while LLM-based evaluation introduces its own biases. Therefore, both the systems and their evaluation methods require careful assessment.
+
+\subsection{Research Question and Objectives}
+
+This study investigates the following research question:
+
+\textbf{Does a hybrid medical question answering system that combines a BiLSTM retriever with a large language model produce better patient-focused responses than retrieval or generation alone, and does its performance depend on knowledge-base coverage?}
+
+The objectives of this study are to:
+
+\begin{enumerate}
+
+\item Train a Siamese BiLSTM retriever using the MedQuAD dataset and evaluate it with standard retrieval metrics.
+
+\item Develop three comparable medical question answering systems using the same base prompt so that retrieval is the only experimental difference.
+
+\item Evaluate response quality using an independent language model and a structured clinical rubric.
+
+\item Perform claim-level verification to identify hallucinated information, including incorrect numerical values.
+
+\item Compare the systems using statistical significance testing with multiple-comparison correction.
+
+\item Investigate how knowledge-base coverage influences the performance of Retrieval-Augmented Generation.
+
+\end{enumerate}
+
+Performance is evaluated using Recall@1 for retrieval, rubric scores with bootstrap confidence intervals for response quality, claim-level hallucination rates for factual accuracy, and Holm-corrected paired statistical tests for system comparisons.
+
+\subsection{Contribution}
+
+This study makes three main contributions.
+
+First, it demonstrates that including a worked example in an LLM-as-a-Judge prompt can unintentionally bias evaluation scores. This explains why an earlier version of the project reported a positive finding that disappeared after the evaluation procedure was corrected.
+
+Second, it presents a corrected and properly evaluated neural retriever. Fixing five implementation issues improved Recall@1 from 0.010 to a level that outperformed the TF-IDF baseline.
+
+Third, it provides a controlled comparison of retrieval-only, language-model-only, and Retrieval-Augmented Generation systems under different knowledge-base coverage conditions. The results show that retrieval augmentation improves factual reliability when relevant documents are available but provides limited benefit when they are not.
+
+\subsection{Structure of the Report}
+
+This report is organised into eight sections.
+
+Section 2 reviews the literature and identifies the research gap. Section 3 describes the research methodology. Section 4 presents the system design, and Section 5 explains the implementation. Section 6 summarises the project outputs. Section 7 presents the experimental results and critical analysis. Finally, Section 8 concludes the study and discusses future work.

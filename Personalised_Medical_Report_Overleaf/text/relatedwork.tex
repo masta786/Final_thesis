@@ -1,0 +1,83 @@
+\section{Literature Survey}
+\label{sec:Relatedwork}
+
+\subsection{Sequence Encoders and Dense Retrieval}
+
+Long Short-Term Memory (LSTM) networks solved the vanishing gradient problem, allowing recurrent models to learn long-range dependencies \citep{hochreiter1997}. Bidirectional LSTMs further improved sentence representation by processing text in both directions, while the Gated Recurrent Unit (GRU) provided a simpler alternative with fewer parameters \citep{cho2014}. The introduction of the Transformer architecture \citep{vaswani2017} shifted natural language processing away from recurrent networks through self-attention, and BERT \citep{devlin2019} established contextual language modelling as the standard approach. BioBERT later adapted this framework for biomedical applications \citep{lee2020}.
+
+Dense retrieval represents both queries and documents as vector embeddings instead of relying on keyword matching. \citet{reimers2019} demonstrated that Siamese sentence encoders can generate effective semantic embeddings, while \citet{karpukhin2020} showed that Dense Passage Retrieval outperformed the traditional BM25 ranking method \citep{robertson2009} on open-domain question answering.
+
+Several implementation details have a significant impact on retrieval performance. Pooling operations should exclude padding tokens, negative sampling should encourage meaningful discrimination between documents, and contrastive objectives such as InfoNCE improve embedding quality by treating other batch samples as negatives \citep{oord2018}. Vocabulary handling is also important because mapping unknown medical terms to the padding index can remove critical clinical information. Although these issues appear minor individually, they can substantially reduce retrieval performance, as demonstrated later in Section 7.2.
+
+\subsection{Retrieval-Augmented Generation and Medical Question Answering}
+
+Retrieval-Augmented Generation (RAG) combines document retrieval with language generation by supplying external evidence during response generation \citep{lewis2020}. In healthcare, this approach is particularly valuable because medical advice requires reliable and traceable sources. \citet{zakka2024} applied this principle in Almanac by grounding responses in clinical guidelines, while \citet{li2023} proposed ChatDoctor through model fine-tuning without external retrieval. \citet{singhal2023} further demonstrated that large language models can encode substantial medical knowledge through Med-PaLM.
+
+The effectiveness of RAG depends on the availability of relevant documents. \citet{xiong2024} reported that retrieval improves answer quality only when the knowledge base contains suitable information, whereas irrelevant documents may reduce performance. \citet{gao2024} reached a similar conclusion, noting that knowledge-base coverage is rarely evaluated explicitly. \citet{shuster2021} showed that retrieval can reduce hallucinations in dialogue systems, while \citet{guu2020} proposed REALM, which jointly learns retrieval and generation but reduces the flexibility of updating external knowledge.
+
+Personalisation remains less explored than factual correctness. Most personalised healthcare systems rely on structured patient profiles, whereas existing medical question answering benchmarks evaluate generic responses rather than patient-specific advice. As a result, current benchmarks rarely assess whether answers consider a patient's medical history, existing conditions, or medications. This limitation motivates the personalised evaluation adopted in this study.
+
+\subsection{Evaluating Generated Clinical Text}
+
+Traditional evaluation metrics such as ROUGE \citep{lin2004} and BLEU \citep{papineni2002} measure similarity between generated and reference text. However, these metrics are less suitable for personalised medical question answering because responses that correctly include patient-specific information may differ substantially from generic reference answers.
+
+To address this limitation, \citet{zheng2023} introduced LLM-as-a-Judge, demonstrating that language models can evaluate generated responses with reasonable agreement to human judgement while also highlighting known sources of bias. Similarly, \citet{es2024} proposed RAGAS, which evaluates retrieval-augmented systems using measures such as faithfulness and relevance.
+
+This study combines both approaches while reducing their limitations. Response quality is evaluated using an independent language model together with claim-level verification, ensuring that important conclusions are supported by both automated evaluation and direct evidence. The study also identifies an additional source of evaluation bias, showing that including a numerical example in the judging rubric can unintentionally influence the scores assigned by the evaluation model.
+
+\subsection{Comparison of Related Systems and the Research Gap}
+
+Table 1 compares this study with six representative works. It examines whether previous studies evaluate patient-specific profiles, perform claim-level grounding audits, and consider knowledge-base coverage as an experimental factor.
+
+\refstepcounter{table}
+\label{tab:1}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.145\textwidth}>{\raggedright\arraybackslash}p{0.211\textwidth}>{\raggedright\arraybackslash}p{0.094\textwidth}>{\raggedright\arraybackslash}p{0.085\textwidth}>{\raggedright\arraybackslash}p{0.106\textwidth}>{\raggedright\arraybackslash}p{0.234\textwidth}}
+\toprule
+\textbf{Study} & \textbf{Evaluation} & \textbf{Profile} & \textbf{Claims} & \textbf{Coverage} & \textbf{Limitation addressed here} \\
+\midrule
+Lewis et al. (2020) & EM / F1 & No & No & No & Introduced RAG but evaluates factoid accuracy only. \\
+Karpukhin et al. (2020) & Recall@k & No & No & No & Retrieval quality only; no generation or safety analysis. \\
+Li et al. (2023) & BLEU / human & No & No & No & Fine-tuning, not retrieval; no per-claim grounding audit. \\
+Singhal et al. (2023) & Accuracy / panel & No & Partial & No & Clinician panel, but exam questions and no patient profile. \\
+Zakka et al. (2024) & Clinician rating & No & Yes & No & Closest work; grounds in guidelines but does not personalise. \\
+Zheng et al. (2023) & Pairwise preference & No & No & No & Establishes judge methodology; documents position/self bias. \\
+This work (2026) & Blind 4-axis rubric, claim-level audit, IR metrics & Yes & Yes & Yes & - \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Table 1 shows three important research gaps. First, most medical question answering studies evaluate answers to questions rather than answers tailored to individual patients. As a result, responses that ignore a patient's medical history or medications are often scored the same as personalised responses. Second, faithfulness is commonly measured using text-overlap metrics or overall human judgement instead of verifying individual claims against supporting evidence. Third, knowledge-base coverage is usually assumed rather than evaluated, even though \citet{xiong2024} showed that retrieval performance depends heavily on whether relevant information is available.
+
+This study addresses these limitations by introducing patient-specific evaluation, claim-level verification, and knowledge-base coverage as an experimental variable. It also ensures a fair comparison by using the same base prompt for both language-model systems so that retrieval is the only difference between them.
+
+\subsection{Synthesis: The Gap and How This Study Fills It}
+
+The reviewed literature shows that retrieval augmentation can improve factual accuracy \citep{lewis2020,shuster2021}, that large language models already contain considerable clinical knowledge \citep{singhal2023}, and that grounding responses in trusted medical guidelines is feasible \citep{zakka2024}. However, previous studies do not clearly demonstrate how retrieval affects personalised medical question answering when prompt wording is controlled or when the knowledge base does not contain the required information.
+
+Table 2 summarises the main limitations identified in the literature, how this study addresses each limitation, and where the supporting experimental evidence is presented.
+
+\refstepcounter{table}
+\label{tab:2}
+\begin{center}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.368\textwidth}>{\raggedright\arraybackslash}p{0.389\textwidth}>{\raggedright\arraybackslash}p{0.159\textwidth}}
+\toprule
+\textbf{Gap identified in the literature} & \textbf{How this study addresses it} & \textbf{Evidence} \\
+\midrule
+G1. Answers are evaluated against questions, not against patients, so ignoring a patient's comorbidities carries no penalty. & A dedicated personalisation axis (0-25) with per-band descriptors, scored blind against a fixed structured profile. & Section 7.3, Table 6 \\
+G2. Faithfulness is judged holistically or by n-gram overlap, neither of which localises an unsupported statement. & Every response decomposed into claims and each checked against the evidence pool, with an exact check on doses and other numbers. & Section 7.3, Table 6 \\
+G3. Knowledge-base coverage is assumed rather than manipulated, so published gains may hold only on retrieval-friendly questions. & Coverage run as an experimental factor: the same questions answered with and without the answering document in the index. & Section 7.4, Table 7 \\
+G4. Retrieval and prompt wording are confounded, because the augmented system and its baseline rarely share a prompt. & One base prompt shared verbatim by both language-model systems; the hybrid adds only the clause governing use of evidence. & Section 3.2, Section 7.3 \\
+G5. Neural retrievers are frequently reported through downstream text-overlap scores that cannot separate relevance from fluency. & Retriever measured directly with Recall@k and MRR against a TF-IDF baseline before it is allowed into the pipeline. & Section 7.2, Table 5 \\
+G6. LLM-as-judge results are seldom corroborated, despite documented judge biases. & Judge drawn from a different model version than the generator, its rubric ablated for anchoring, and every claim audited by a non-LLM instrument. & Section 7.1, Table 4 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Among these limitations, two are particularly important. The first is the use of a shared prompt for both language-model systems, ensuring that retrieval is the only experimental difference. The second is the knowledge-base coverage experiment, which evaluates system performance both with and without the relevant supporting document. These design choices allow the contribution of retrieval augmentation to be measured more reliably.
+
+Overall, this study addresses a methodological gap by providing a controlled comparison of retrieval-only, language-model-only, and hybrid Retrieval-Augmented Generation systems using patient-specific evaluation, claim-level verification, and controlled knowledge-base coverage.
